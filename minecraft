@@ -159,7 +159,11 @@ function install_spigot_plugin {
     declare response
     read -p "Enter the URL of the plugin JAR file to be installed: " response
     cd plugins
-    wget response
+    wget $response
+    if [[ $response == *".zip" ]] then
+      unzip *.zip
+      rm *.zip
+    fi
     printf "\n\nInstallation finished. Any errors will be reported above.\n"
     printf "If the installation succeeded, you may need to restart the Spigot server by running ',minecraft spigot restart'.\n"
 }
