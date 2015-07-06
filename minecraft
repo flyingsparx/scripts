@@ -62,7 +62,20 @@ function restart_server {
 
     printf "\nRestarting Minecraft server..."
     sleep 5 # Wait for server to stop
-    tmux send-keys -t minecraft "java -Xmx2048M -Xms2048M -jar minecraft_server.jar nogui" C-m
+    tmux send-keys -t minecraft "java -Xmx$SERVER_SIZE -Xms$SERVER_SIZE -jar minecraft_server.jar nogui" C-m
+    printf "\nServer restarted successfully.\n\n"
+}
+
+function restart_spigot {
+    tmux send-keys -t minecraft "stop" C-m > /dev/null 2>&1
+    if [ ! $? -eq 0 ]; then
+        printf "\nMinecraft server or Spigot server has not been started.\nRun 'minecraft start' to begin.\n\n"
+        exit
+    fi
+
+    printf "\nRestarting Minecraft server..."
+    sleep 5 # Wait for server to stop
+    tmux send-keys -t minecraft "java -Xmx$SERVER_SIZE -Xms$SERVER_SIZE -jar spigot_server.jar nogui" C-m
     printf "\nServer restarted successfully.\n\n"
 }
 
@@ -95,7 +108,8 @@ function update_server {
 function update_spigot {
     cd ~/
     declare response
-    read -p "Enter a Spigot server version to download (e.g. for 1.8, enter '18'): " response
+    printf "\nUpdating Spigot server.\n\n"
+    read -p "Enter a Spigot server version to install (e.g. for 1.8, enter '18'): " response
     printf "\nDownloading Spigot server..."
     mv spigot_server.jar spigot_server.jar.bak > /dev/null 2>&1
     wget "http://getspigot.org/spigot$response/spigot_server.jar" -O "spigot_server.jar"
@@ -126,7 +140,7 @@ function install_server {
 function install_spigot {
     printf "\nInstalling Minecraft Spigot server...\n\n"
     update_spigot
-    printf "\nInstallation exited. If the installation was successful, you may need to agree to the EULA by running 'minecraft eula'.\n\n"
+    printf "\nIf the installation was successful, you may need to agree to the EULA by running 'minecraft eula'.\n\n"
 }
 
 function backup_world {
@@ -138,8 +152,36 @@ function backup_world {
     printf "\nWorld backed-up to file: 'world_backups/world-$date.tar.gz'\n\n"
 }
 
+function install_spigot_plugin {
+    cd ~/
+    printf "\nAdding Spigot plugins.\n\n"
+    mkdir plugins > /dev/null 2>&1
+    declare response
+    read -p "Enter the URL of the plugin JAR file to be installed: " response
+    cd plugins
+    wget response
+    printf "\n\nInstallation finished. Any errors will be reported above.\n"
+    printf "If the installation succeeded, you may need to restart the Spigot server by running ',minecraft spigot restart'.\n"
+}
+
+function list_spigot_plugins {
+    printf "\nInstalled Spigot plugins:\n"
+    ls ~/plugins
+}
+
+function uninstall_spigot_plugin {
+    list_spigot_plugins
+    declare response
+    read -p "Enter the name of the plugin to uninstall: " response
+    rm "~/plugins/$response"
+    printf "\nPlugin uninstallation finished." 
+}
+
 function show_help {
-    printf "\nYou can run this program with the following commands:\n\n"
+    printf "\nYou can run this program with the following commands.\n\n"
+    printf "\n-----------------------------------------------------\n"
+    printf "The below options refer to vanilla Minecraft server installations:"
+    printf "\n-----------------------------------------------------\n\n"
     printf "help\n"
     printf "\tShow this help text.\n\n"
     printf "start\n"
@@ -158,6 +200,28 @@ function show_help {
     printf "\tInstalls the latest Minecraft server version.\n\n"
     printf "eula\n"
     printf "\tAgree or disagree to the Minecraft EULA. You need to agree to this for the server to work correctly.\n\n"
+    printf "\n----------------------------------------------------\n"
+    printf "The below options refer to Spigot Minecraft server installations:"
+    printf "\n----------------------------------------------------\n\n"
+    printf "spigot start\n"
+    printf "\tStart a new Spigot server.\n\n"
+    printf "spigot stop\n"
+    printf "\tStop the Minecraft or Spigot server.\n\n"
+    printf "spigot restart\n"
+    printf "\tSafely restart the Spigot server (if this or vanilla Minecraft is running).\n\n"
+    printf "spigot update\n"
+    printf "\tUpdate the Spigot server to a custom version.\n\n"
+    printf "spigot install\n"
+    printf "\tInstall the Spigot server.\n\n"
+    printf "spigot install-plugin\n"
+    printf "\tInstall a Spigot plugin.\n\n"
+    printf "spigot list-plugins\n"
+    printf "\tSee all installed Spigot plugins.\n\n"
+    printf "spigot uninstall-plugin\n"
+    printf "\tUninstall a Spigot plugin.\n\n"
+    printf "\n----------------------------------------------------\n"
+    printf "Commands like 'eula', 'backup', and 'manage' can be used for vanilla or Spigot installs."
+    printf "\n----------------------------------------------------\n"
 }
 
 
@@ -175,6 +239,11 @@ case "$1" in
       case "$2" in
         start)    start_spigot;;
         stop)     stop_server;;
+        restart)  restart_spigot;;
+        update)   update_spigot;;
         install)  install_spigot;;
+        install-plugin)  install_spigot_plugin;;
+        list-plugins)    list_spigot_pluigns;;
+        uninstall-plugin) uninstall_spigot_plugin;;
       esac
 esac
