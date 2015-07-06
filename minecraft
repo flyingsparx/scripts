@@ -157,7 +157,7 @@ function install_spigot_plugin {
     printf "\nAdding Spigot plugins.\n\n"
     mkdir plugins > /dev/null 2>&1
     declare response
-    read -p "Enter the URL of the plugin JAR file to be installed: " response
+    read -p "Enter the URL of the plugin file to be installed (JAR or ZIP. ZIP files will be automatically decomprssed): " response
     cd plugins
     wget $response
     if [[ $response == *".zip" ]]; then
@@ -165,7 +165,7 @@ function install_spigot_plugin {
       rm *.zip
     fi
     printf "\n\nInstallation finished. Any errors will be reported above.\n"
-    printf "If the installation succeeded, you may need to restart the Spigot server by running ',minecraft spigot restart'.\n"
+    printf "If the installation succeeded, you may need to restart the Spigot server by running 'minecraft spigot restart'.\n"
 }
 
 function list_spigot_plugins {
