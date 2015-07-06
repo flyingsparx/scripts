@@ -1,10 +1,13 @@
 #!/bin/bash
 
 # Copyright 2015 Will Webberley
-# Simple script to manage a Minecraft server.
-# Needs tmux to handle the process, wget to update, and tar to compress backups.
+# Very simple script to manage a Minecraft server.
+# 
+# Needs a Java runtime, tmux to handle the process, wget to update, and tar to compress backups.
 #
 # Run with 'help' flag to see a list of available commands.
+
+SERVER_SIZE="2048M"
 
 function start_server {
     printf "\nStarting new Minecraft server..."
@@ -13,13 +16,29 @@ function start_server {
 
     if [ ! $? -eq 0 ]; then
          printf "\nThere is already a Minecraft server running.\n\nRun 'minecraft stop' to stop it.\n\n"
-	 exit
+	  exit
     fi
     sleep 2 # Wait for tmux login
 
-    tmux send-keys -t minecraft "java -Xmx2048M -Xms2048M -jar minecraft_server.jar nogui" C-m
+    tmux send-keys -t minecraft "java -Xmx$SERVER_SIZE -Xms$SERVER_SIZE -jar minecraft_server.jar nogui" C-m
     sleep 5 # Wait for world generation
     printf "\nMinecraft server started. Run 'minecraft help' for more commands.\n\n"
+}
+
+function start_spigot {
+    printf "\nStarting new Minecraft Spigot server..."
+    cd ~/
+    tmux new-session -s minecraft -n Minecraft -d > /dev/null 2>&1
+
+    if [ ! $? -eq 0 ]; then
+         printf "\nThere is already a Minecraft server running.\n\nRun 'minecraft stop' to stop it.\n\n"
+	  exit
+    fi
+    sleep 2 # Wait for tmux login
+
+    tmux send-keys -t minecraft "java -Xmx$SERVER_SIZE -Xms$SERVER_SIZE -jar spigot_server.jar nogui" C-m
+    sleep 5 # Wait for world generation
+    printf "\nMinecraft Spigot server started. Run 'minecraft help' for more commands.\n\n"
 }
 
 function stop_server {
@@ -70,8 +89,16 @@ function update_server {
     printf "\n\nDownloading Minecraft server version $version... (Press ctrl-C to cancel)\n\n"    
     sleep 2
     wget "https://s3.amazonaws.com/Minecraft.Download/versions/$version/minecraft_server.$version.jar" -O "minecraft_server.jar"
-    restart_server
-    printf "\nMinecraft server $version installed successfully.\n\n"
+    printf "\nMinecraft server $version installed successfully.\nRun 'minecraft restart' to restart the server if it already running.\n\n"
+}
+
+function update_spigot {
+    declare response
+    read -p "Enter a Spigot server version to download (e.g. for 1.8, enter '18'): " response
+    printf "\nDownloading Spigot server..."
+    mv spigot_server.jar spigot_server.jar.bak > /dev/null 2>&1
+    wget "http://getspigot.org/spigot$response/spigot_server.jar" -O "spigot_server.jar"
+    printf "\nSpigot installation finished. Any errors will be reported above.\n\n"
 }
 
 function agree_eula {
@@ -80,7 +107,7 @@ function agree_eula {
     printf "A copy of the Minecraft EULA is available here: https://account.mojang.com/documents/minecraft_eula.\n"
     read -p "Do you agree to the Minecraft EULA? (y/n): " response
     if [ $response == "y" -o $response == "Y" ]; then
-	printf "# This license agreement was agreed to when installed.\neula=true" > eula.txt
+        printf "# This license agreement was agreed to when installed.\neula=true" > eula.txt
         printf "\n\nYou have agreed to the Minecraft EULA.\n"
     else
         printf "# This license agreement was not agreed to when installed.\neula=false" > eula.txt
@@ -89,10 +116,16 @@ function agree_eula {
 }
 
 function install_server {
-    printf "\n\nInstalling Minecraft server...\n"
+    printf "\nInstalling Minecraft server...\n"
     update_server
     agree_eula
     printf "\nInstallation successful.\n\n"
+}
+
+function install_spigot {
+    printf "\nInstalling Minecraft Spigot server...\n\n"
+    update_spigot
+    printf "\nInstallation exited. If the installation was successful, you may need to agree to the EULA by running 'minecraft eula'.\n\n"
 }
 
 function backup_world {
@@ -137,4 +170,10 @@ case "$1" in
     restart) restart_server;;
     eula)    agree_eula;;
     help)    show_help;;
+    spigot)
+      case "$2" in
+        start)    start_spigot;;
+        stop)     stop_server;;
+        install)  install_spigot;;
+      esac
 esac
