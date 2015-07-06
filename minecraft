@@ -93,6 +93,7 @@ function update_server {
 }
 
 function update_spigot {
+    cd ~/
     declare response
     read -p "Enter a Spigot server version to download (e.g. for 1.8, enter '18'): " response
     printf "\nDownloading Spigot server..."
