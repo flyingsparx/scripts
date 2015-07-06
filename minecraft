@@ -8,10 +8,11 @@
 # Run with 'help' flag to see a list of available commands.
 
 SERVER_SIZE="2048M"
+MINECRAFT_DIR="$HOME"
 
 function start_server {
     printf "\nStarting new Minecraft server..."
-    cd ~/
+    cd $MINECRAFT_DIR
     tmux new-session -s minecraft -n Minecraft -d > /dev/null 2>&1
 
     if [ ! $? -eq 0 ]; then
@@ -27,7 +28,7 @@ function start_server {
 
 function start_spigot {
     printf "\nStarting new Minecraft Spigot server..."
-    cd ~/
+    cd $MINECRAFT_DIR
     tmux new-session -s minecraft -n Minecraft -d > /dev/null 2>&1
 
     if [ ! $? -eq 0 ]; then
@@ -89,7 +90,7 @@ function manage_server {
 }
 
 function update_server {
-    cd ~/
+    cd $MINECRAFT_DIR
     printf "\nAuto-discovering latest Minecraft server version... "
     version_line=$(wget -q -O- https://s3.amazonaws.com/Minecraft.Download/versions/versions.json | grep -oP "\"release\": ?\"[0-9]\.[0-9]\.[0-9]\"")
     version=$( echo "$version_line" | grep -oP "[0-9]\.[0-9]\.[0-9]" )
@@ -106,18 +107,21 @@ function update_server {
 }
 
 function update_spigot {
-    cd ~/
+    cd $MINECRAFT_DIR
     declare response
     printf "\nUpdating Spigot server.\n\n"
     read -p "Enter a Spigot server version to install (e.g. for 1.8, enter '18'): " response
     printf "\nDownloading Spigot server..."
-    mv spigot_server.jar spigot_server.jar.bak > /dev/null 2>&1
+    date=$(date +"%y-%m-%d-%T")
+    mkdir old_minecraft_servers > /dev/null 2>&1
+    mv spigot_server.jar "old_minecraft_servers/$date-spigot-server.jar" > /dev/null 2>&1
+
     wget "http://getspigot.org/spigot$response/spigot_server.jar" -O "spigot_server.jar"
     printf "\nSpigot installation finished. Any errors will be reported above.\n\n"
 }
 
 function agree_eula {
-    cd ~/
+    cd $MINECRAFT_DIR
     declare response
     printf "A copy of the Minecraft EULA is available here: https://account.mojang.com/documents/minecraft_eula.\n"
     read -p "Do you agree to the Minecraft EULA? (y/n): " response
@@ -143,17 +147,17 @@ function install_spigot {
     printf "\nIf the installation was successful, you may need to agree to the EULA by running 'minecraft eula'.\n\n"
 }
 
-function backup_world {
-    printf "\nStarting world backup..."
-    cd ~/
-    mkdir world_backups > /dev/null 2>&1
+function backup {
+    printf "\nStarting world and settings backup..."
+    cd $MINECRAFT_DIR
+    mkdir backups > /dev/null 2>&1
     date=$(date +"%y-%m-%d-%T")
-    tar -czf "world_backups/world-$date.tar.gz" world
-    printf "\nWorld backed-up to file: 'world_backups/world-$date.tar.gz'\n\n"
+    tar -czf "backups/$date.tar.gz" --exclude=backups --exclude=old_minecraft_servers ./* 
+    printf "\nWorld and server backed-up to file: 'backups/$date.tar.gz'\n\n"
 }
 
 function install_spigot_plugin {
-    cd ~/
+    cd $MINECRAFT_DIR
     printf "\nAdding Spigot plugins.\n\n"
     mkdir plugins > /dev/null 2>&1
     declare response
@@ -197,7 +201,7 @@ function show_help {
     printf "manage\n"
     printf "\tJoin the server console to administer. Press ctrl-B-D to leave.\n\n"
     printf "backup\n"
-    printf "\tBacks-up and compresses the current Minecraft world.\n\n"
+    printf "\tBacks-up and compresses the current Minecraft world and settings.\n\n"
     printf "update\n"
     printf "\tUpdates the Minecraft server to the latest version.\n\n"
     printf "install\n"
@@ -235,7 +239,7 @@ case "$1" in
     manage)  manage_server;;
     update)  update_server;;
     install) install_server;;
-    backup)  backup_world;;
+    backup)  backup;;
     restart) restart_server;;
     eula)    agree_eula;;
     help)    show_help;;
