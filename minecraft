@@ -160,7 +160,7 @@ function install_spigot_plugin {
     read -p "Enter the URL of the plugin JAR file to be installed: " response
     cd plugins
     wget $response
-    if [[ $response == *".zip" ]] then
+    if [[ $response == *".zip" ]]; then
       unzip *.zip
       rm *.zip
     fi
