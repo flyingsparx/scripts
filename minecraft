@@ -169,16 +169,16 @@ function install_spigot_plugin {
 }
 
 function list_spigot_plugins {
-    printf "\nInstalled Spigot plugins:\n"
+    printf "\nInstalled plugin files and directories:\n"
     ls ~/plugins
 }
 
 function uninstall_spigot_plugin {
     list_spigot_plugins
     declare response
-    read -p "Enter the name of the plugin to uninstall: " response
-    rm "~/plugins/$response"
-    printf "\nPlugin uninstallation finished." 
+    read -p "Enter the name of the plugin to uninstall (you can use wildcards, e.g.: 'Essentials*'): " response
+    rm -rf "~/plugins/$response"
+    printf "\nPlugin uninstallation finished. You may need to restart the Spigot server for the uninstallation to have an effect.\n" 
 }
 
 function show_help {
